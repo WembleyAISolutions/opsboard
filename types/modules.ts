@@ -30,3 +30,11 @@ export interface TodaySummary {
   today: TodayBucket[];
   thisWeek: TodayBucket[];
 }
+
+export type AiSourceName = "DEV AI" | "FINANCE AI" | "HOME AI";
+
+export interface ModuleSignalItem {
+  id: string;
+  source: AiSourceName;
+  text: string;
+}
