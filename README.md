@@ -230,21 +230,21 @@ Integration with central AI and agent orchestrators.
 
 ---
 
-# Repository Structure
+## Repository Structure
 
-opsboard
-│
-├ docs
-│ ├ brief
-│ ├ architecture
-│ ├ product
-│ ├ ux
-│ └ dev
-│
-├ app
-├ components
-├ schema
-└ README.md
+    opsboard
+    │
+    ├─ docs
+    │  ├─ brief
+    │  ├─ architecture
+    │  ├─ product
+    │  ├─ ux
+    │  └─ dev
+    │
+    ├─ app
+    ├─ components
+    ├─ schema
+    └─ README.md
 
 ---
 
