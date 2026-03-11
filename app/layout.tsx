@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "OpsBoard v0.1",
-  description: "Lightweight human-AI work gateway for ChatGPT-centered multi-agent workflows."
+  description: "Lightweight human-AI work gateway for central-AI multi-agent workflows."
 };
 
 type RootLayoutProps = Readonly<{

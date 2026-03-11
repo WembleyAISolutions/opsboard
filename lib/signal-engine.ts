@@ -1,4 +1,6 @@
-import type { SignalItem, SignalKind, SignalPriority, SignalStatus, TargetModule, TodaySummary, WeekSummary } from "@/types/signal";
+import type { SignalItem, SignalKind, SignalPriority, SignalStatus, TargetModule, TodaySummary, WeekSummary } from "../types/signal";
+import type { DeadSignal, NormalizedSignal, ValidationWarning } from "../types/signal-producer";
+import { getSignalsByModule as selectSignalsByModule, sortSignalsForModule } from "./signal-selectors";
 
 type RawSignalInput = Partial<SignalItem> &
   Pick<SignalItem, "signal_id" | "source_ai" | "title" | "summary" | "created_at" | "updated_at">;
@@ -118,6 +120,119 @@ export function getWeekSummary(signals: SignalItem[]): WeekSummary {
     itemsInProgress: signals.filter((item) => item.signal_status === "doing").length,
     waitingApproval: signals.filter((item) => item.signal_status === "approval").length,
     completed: signals.filter((item) => item.signal_status === "done").length
+  };
+}
+
+type EngineModule = "inbox" | "signal" | "approvals" | "voice" | "today_summary_only";
+type EngineAction = "approve" | "reject" | "later" | "mark_reviewed" | "dismiss" | "send_to_inbox";
+type EngineInputSignal = SignalItem | NormalizedSignal;
+
+function toSignalItem(signal: EngineInputSignal): SignalItem {
+  if ("created_at" in signal && "updated_at" in signal) {
+    return signal;
+  }
+
+  return {
+    signal_id: signal.signal_id,
+    source_ai: signal.source_ai,
+    title: signal.title,
+    summary: signal.summary,
+    signal_kind: signal.signal_kind,
+    signal_status: signal.signal_status,
+    signal_priority: signal.signal_priority,
+    target_module: signal.target_module,
+    human_action_needed: signal.human_action_needed,
+    created_at: signal.timestamp,
+    updated_at: signal.timestamp
+  };
+}
+
+function touch(signal: SignalItem): SignalItem {
+  return {
+    ...signal,
+    updated_at: new Date().toISOString()
+  };
+}
+
+function applyAction(signal: SignalItem, action: EngineAction): SignalItem {
+  switch (action) {
+    case "approve":
+      return touch({ ...signal, signal_status: "done", human_action_needed: false, target_module: "today_summary_only" });
+    case "reject":
+      return touch({ ...signal, signal_status: "blocked", human_action_needed: false, target_module: "signal" });
+    case "later":
+      return touch(signal);
+    case "mark_reviewed":
+      return touch({ ...signal, signal_status: "done", human_action_needed: false, target_module: "today_summary_only" });
+    case "dismiss":
+      return touch({ ...signal, is_dismissed: true });
+    case "send_to_inbox":
+      return touch({ ...signal, target_module: "inbox", signal_status: "pending" });
+    default: {
+      const exhaustive: never = action;
+      throw new Error(`Unhandled local action: ${String(exhaustive)}`);
+    }
+  }
+}
+
+export interface LocalSignalEngine {
+  ingest(signal: EngineInputSignal): void;
+  ingestMany(signals: EngineInputSignal[]): void;
+  getSignals(): SignalItem[];
+  getSignalsByModule(module: EngineModule): SignalItem[];
+  getTodaySummary(): TodaySummary;
+  getWeekSummary(): WeekSummary;
+  recordDeadSignal(dead: DeadSignal): void;
+  getDeadSignals(): DeadSignal[];
+  recordWarning(warning: ValidationWarning): void;
+  getWarnings(): ValidationWarning[];
+  applyLocalAction(signalId: string, action: EngineAction): void;
+}
+
+export function createSignalEngine(initialSignals: EngineInputSignal[] = []): LocalSignalEngine {
+  let signals: SignalItem[] = initialSignals.map((signal) => toSignalItem(signal));
+  let deadSignals: DeadSignal[] = [];
+  let warnings: ValidationWarning[] = [];
+
+  return {
+    ingest(signal) {
+      signals = [...signals, toSignalItem(signal)];
+    },
+    ingestMany(nextSignals) {
+      signals = [...signals, ...nextSignals.map((signal) => toSignalItem(signal))];
+    },
+    getSignals() {
+      return [...signals];
+    },
+    getSignalsByModule(module) {
+      return sortSignalsForModule(selectSignalsByModule(signals, module), module);
+    },
+    getTodaySummary() {
+      return getTodaySummary(signals.filter((signal) => !signal.is_dismissed));
+    },
+    getWeekSummary() {
+      return getWeekSummary(signals.filter((signal) => !signal.is_dismissed));
+    },
+    recordDeadSignal(dead) {
+      deadSignals = [...deadSignals, dead];
+    },
+    getDeadSignals() {
+      return [...deadSignals];
+    },
+    recordWarning(warning) {
+      warnings = [...warnings, warning];
+    },
+    getWarnings() {
+      return [...warnings];
+    },
+    applyLocalAction(signalId, action) {
+      signals = signals.map((signal) => {
+        if (signal.signal_id !== signalId) {
+          return signal;
+        }
+        return applyAction(signal, action);
+      });
+    }
   };
 }
 

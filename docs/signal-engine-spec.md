@@ -352,7 +352,7 @@ Examples:
 
 - New incoming email summary
 - New voice note transcript
-- New AI generated note
+- New AI-generated note
 
 ---
 

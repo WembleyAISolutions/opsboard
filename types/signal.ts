@@ -20,7 +20,10 @@ export interface SignalItem {
   human_action_needed: boolean;
   created_at: string;
   updated_at: string;
+  is_dismissed?: boolean;
 }
+
+export type LocalSignalAction = "approve" | "reject" | "later" | "mark_reviewed" | "dismiss" | "send_to_inbox";
 
 export interface TodaySummary {
   approvalsWaiting: number;

@@ -1,6 +1,6 @@
-import type { SignalItem } from "@/types/signal";
+import type { SignalItem } from "../types/signal";
 
-type ModuleKey = "inbox" | "signal" | "approvals" | "voice" | "today";
+type ModuleKey = "inbox" | "signal" | "approvals" | "voice" | "today_summary_only";
 
 const priorityWeight: Record<SignalItem["signal_priority"], number> = {
   low: 0,
@@ -22,11 +22,14 @@ function byNewestUpdated(a: SignalItem, b: SignalItem): number {
 }
 
 export function getSignalsByModule(signals: SignalItem[], module: ModuleKey): SignalItem[] {
-  if (module === "today") {
-    return [];
+  const active = signals.filter((item) => !item.is_dismissed);
+  if (module === "approvals") {
+    return active.filter((item) => item.target_module === "approvals" && item.signal_status === "approval");
   }
-
-  return signals.filter((item) => item.target_module === module);
+  if (module === "today_summary_only") {
+    return active.filter((item) => item.target_module === "today_summary_only");
+  }
+  return active.filter((item) => item.target_module === module);
 }
 
 export function sortSignalsForModule(signals: SignalItem[], module: ModuleKey): SignalItem[] {
@@ -60,5 +63,9 @@ export function sortSignalsForModule(signals: SignalItem[], module: ModuleKey): 
     return cloned.sort(byNewestUpdated);
   }
 
-  return cloned;
+  if (module === "today_summary_only") {
+    return cloned.sort(byNewestUpdated);
+  }
+
+  return cloned.sort(byNewestUpdated);
 }

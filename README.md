@@ -1,6 +1,6 @@
 # OpsBoard
 
-**OpsBoard** is a lightweight human–AI work gateway for **ChatGPT-centered multi-agent workflows**.
+**OpsBoard** is a lightweight human-AI work gateway for **central-AI multi-agent workflows**.
 
 It provides a quiet interface where an owner can forward instructions to a central AI and see only the minimal workflow signals that require attention.
 
@@ -10,7 +10,7 @@ OpsBoard is designed for **solo founders, small teams, and AI-assisted businesse
 
 # The Problem
 
-In ChatGPT-based multi-AI workflows, the human owner often becomes the **manual router**:
+In central-AI multi-agent workflows, the human owner often becomes the **manual router**:
 
 - copying instructions between AI chats  
 - remembering which AI is responsible for what  
@@ -23,7 +23,7 @@ This creates **communication friction** and prevents AI teams from operating smo
 
 # The Solution
 
-OpsBoard introduces a **minimal human–AI interface layer** that:
+OpsBoard introduces a **minimal human-AI interface layer** that:
 
 - receives owner instructions  
 - forwards them to the central AI  
@@ -100,7 +100,7 @@ Features:
 
 - desktop edge strip
 - expandable mini work notebook
-- runs alongside ChatGPT
+- runs alongside a central AI workspace
 
 ---
 

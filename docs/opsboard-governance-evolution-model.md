@@ -169,7 +169,7 @@ The system acts as a **lightweight operational gateway between human judgment an
 
 # Summary
 
-OpsBoard provides a stable governance model for human–AI collaboration.
+OpsBoard provides a stable governance model for human-AI collaboration.
 
 The system ensures:
 
@@ -439,7 +439,7 @@ The system acts as a **lightweight operational gateway between human judgment an
 
 # Summary
 
-OpsBoard provides a stable governance model for human–AI collaboration.
+OpsBoard provides a stable governance model for human-AI collaboration.
 
 The system ensures:
 
