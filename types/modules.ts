@@ -1,4 +1,4 @@
-export type CoreModuleId = "inbox" | "signal" | "approvals" | "voice-capture" | "today";
+export type CoreModuleId = "inbox" | "signal" | "approvals" | "voice" | "today";
 
 export type ModuleTone = "low" | "normal" | "high";
 
@@ -10,31 +10,4 @@ export interface CoreModule {
   summary: string;
   tone: ModuleTone;
   state: ModuleState;
-}
-
-export type TodayBucketId =
-  | "approvals-waiting"
-  | "signals-needing-review"
-  | "inbox-items"
-  | "items-in-progress"
-  | "waiting-approval"
-  | "completed";
-
-export interface TodayBucket {
-  id: TodayBucketId;
-  label: string;
-  count: number;
-}
-
-export interface TodaySummary {
-  today: TodayBucket[];
-  thisWeek: TodayBucket[];
-}
-
-export type AiSourceName = "DEV AI" | "FINANCE AI" | "HOME AI";
-
-export interface ModuleSignalItem {
-  id: string;
-  source: AiSourceName;
-  text: string;
 }

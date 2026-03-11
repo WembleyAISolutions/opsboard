@@ -1,4 +1,5 @@
-import type { CoreModule, CoreModuleId, ModuleSignalItem, TodaySummary } from "@/types/modules";
+import type { CoreModule } from "@/types/modules";
+import type { SignalItem } from "@/types/signal";
 
 export const coreModules: CoreModule[] = [
   {
@@ -23,7 +24,7 @@ export const coreModules: CoreModule[] = [
     state: "active"
   },
   {
-    id: "voice-capture",
+    id: "voice",
     name: "Voice",
     summary: "Short notes transcribed into follow-up snippets.",
     tone: "low",
@@ -38,34 +39,109 @@ export const coreModules: CoreModule[] = [
   }
 ];
 
-export const todaySummary: TodaySummary = {
-  today: [
-    { id: "approvals-waiting", label: "approvals waiting", count: 3 },
-    { id: "signals-needing-review", label: "signals needing review", count: 5 },
-    { id: "inbox-items", label: "inbox items", count: 12 }
-  ],
-  thisWeek: [
-    { id: "items-in-progress", label: "items in progress", count: 6 },
-    { id: "waiting-approval", label: "waiting approval", count: 2 },
-    { id: "completed", label: "completed", count: 9 }
-  ]
-};
-
-export const moduleSignals: Partial<Record<CoreModuleId, ModuleSignalItem[]>> = {
-  inbox: [
-    { id: "inbox-1", source: "DEV AI", text: "Deployment notes received and ready for owner review." },
-    { id: "inbox-2", source: "HOME AI", text: "Personal scheduling request captured for later routing." }
-  ],
-  signal: [
-    { id: "signal-1", source: "FINANCE AI", text: "Cost variance flag surfaced for current week." },
-    { id: "signal-2", source: "DEV AI", text: "Code quality drift warning requires a quick scan." }
-  ],
-  approvals: [
-    { id: "approvals-1", source: "FINANCE AI", text: "Budget adjustment is waiting for explicit approval." },
-    { id: "approvals-2", source: "DEV AI", text: "Release gate remains paused until confirmation." }
-  ],
-  "voice-capture": [
-    { id: "voice-1", source: "HOME AI", text: "Voice note converted into concise handoff text." },
-    { id: "voice-2", source: "DEV AI", text: "Architecture reminder extracted from spoken draft." }
-  ]
-};
+export const mockSignals: SignalItem[] = [
+  {
+    signal_id: "sig-dev-build-failed",
+    source_ai: "DEV_AI",
+    title: "Build pipeline failed",
+    summary: "CI build failed after dependency update and needs review.",
+    signal_kind: "blocked",
+    signal_status: "blocked",
+    signal_priority: "high",
+    target_module: "signal",
+    human_action_needed: true,
+    created_at: "2026-03-10T07:42:00.000Z",
+    updated_at: "2026-03-10T08:04:00.000Z"
+  },
+  {
+    signal_id: "sig-dev-deploy-approval",
+    source_ai: "DEV_AI",
+    title: "Deployment approval required",
+    summary: "Release candidate passed checks and needs go/no-go confirmation.",
+    signal_kind: "approval",
+    signal_status: "approval",
+    signal_priority: "high",
+    target_module: "approvals",
+    human_action_needed: true,
+    created_at: "2026-03-10T08:10:00.000Z",
+    updated_at: "2026-03-10T08:22:00.000Z"
+  },
+  {
+    signal_id: "sig-finance-invoice-approval",
+    source_ai: "FINANCE_AI",
+    title: "Invoice awaiting approval",
+    summary: "Vendor invoice queued and waiting for owner confirmation.",
+    signal_kind: "approval",
+    signal_status: "approval",
+    signal_priority: "normal",
+    target_module: "approvals",
+    human_action_needed: true,
+    created_at: "2026-03-10T07:20:00.000Z",
+    updated_at: "2026-03-10T08:00:00.000Z"
+  },
+  {
+    signal_id: "sig-finance-bas-reminder",
+    source_ai: "FINANCE_AI",
+    title: "BAS reminder",
+    summary: "BAS preparation window opens this week and documents are ready.",
+    signal_kind: "info",
+    signal_status: "pending",
+    signal_priority: "normal",
+    target_module: "inbox",
+    human_action_needed: false,
+    created_at: "2026-03-10T06:30:00.000Z",
+    updated_at: "2026-03-10T07:30:00.000Z"
+  },
+  {
+    signal_id: "sig-home-school-email",
+    source_ai: "HOME_AI",
+    title: "School email received",
+    summary: "School newsletter captured with an upcoming action note.",
+    signal_kind: "input",
+    signal_status: "pending",
+    signal_priority: "low",
+    target_module: "inbox",
+    human_action_needed: false,
+    created_at: "2026-03-10T08:18:00.000Z",
+    updated_at: "2026-03-10T08:18:00.000Z"
+  },
+  {
+    signal_id: "sig-home-scholarship-completed",
+    source_ai: "HOME_AI",
+    title: "Scholarship follow-up completed",
+    summary: "Requested scholarship follow-up email has been sent successfully.",
+    signal_kind: "progress",
+    signal_status: "done",
+    signal_priority: "normal",
+    target_module: "today_summary_only",
+    human_action_needed: false,
+    created_at: "2026-03-09T05:20:00.000Z",
+    updated_at: "2026-03-10T06:10:00.000Z"
+  },
+  {
+    signal_id: "sig-system-voice-captured",
+    source_ai: "SYSTEM",
+    title: "Voice note captured",
+    summary: "New voice note has been transcribed and is waiting for review.",
+    signal_kind: "input",
+    signal_status: "pending",
+    signal_priority: "normal",
+    target_module: "voice",
+    human_action_needed: false,
+    created_at: "2026-03-10T08:25:00.000Z",
+    updated_at: "2026-03-10T08:25:00.000Z"
+  },
+  {
+    signal_id: "sig-dev-refactor-progress",
+    source_ai: "DEV_AI",
+    title: "Refactor in progress",
+    summary: "Signal classification refactor is underway.",
+    signal_kind: "progress",
+    signal_status: "doing",
+    signal_priority: "normal",
+    target_module: "today_summary_only",
+    human_action_needed: false,
+    created_at: "2026-03-10T07:10:00.000Z",
+    updated_at: "2026-03-10T08:12:00.000Z"
+  }
+];

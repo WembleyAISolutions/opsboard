@@ -5,7 +5,9 @@ import type { CoreModule, CoreModuleId } from "@/types/modules";
 import { ModuleNotebookPanel } from "@/components/module-notebook-panel";
 import { SidebarNavigation } from "@/components/sidebar-navigation";
 import { TodaySummaryCard } from "@/components/today-summary-card";
-import { moduleSignals, todaySummary } from "@/lib/mock-data";
+import { mockSignals } from "@/lib/mock-data";
+import { getTodaySummary, getWeekSummary, normalizeSignal } from "@/lib/signal-engine";
+import { getSignalsByModule, sortSignalsForModule } from "@/lib/signal-selectors";
 
 type DesktopLiteShellProps = {
   modules: CoreModule[];
@@ -18,13 +20,17 @@ export function DesktopLiteShell({ modules }: DesktopLiteShellProps) {
     return modules.find((module) => module.id === selectedModuleId) ?? modules[0];
   }, [modules, selectedModuleId]);
 
+  const engineSignals = useMemo(() => mockSignals.map((signal) => normalizeSignal(signal)), []);
+  const todaySummary = useMemo(() => getTodaySummary(engineSignals), [engineSignals]);
+  const weekSummary = useMemo(() => getWeekSummary(engineSignals), [engineSignals]);
+
   const selectedSignals = useMemo(() => {
-    if (!selectedModule) {
+    if (!selectedModule || selectedModule.id === "today") {
       return [];
     }
 
-    return moduleSignals[selectedModule.id] ?? [];
-  }, [selectedModule]);
+    return sortSignalsForModule(getSignalsByModule(engineSignals, selectedModule.id), selectedModule.id);
+  }, [engineSignals, selectedModule]);
 
   if (!selectedModule) {
     return null;
@@ -44,7 +50,7 @@ export function DesktopLiteShell({ modules }: DesktopLiteShellProps) {
         <SidebarNavigation modules={modules} selectedModuleId={selectedModule.id} onSelect={setSelectedModuleId} />
         <div className="flex-1">
           {selectedModule.id === "today" ? (
-            <TodaySummaryCard summary={todaySummary} />
+            <TodaySummaryCard todaySummary={todaySummary} weekSummary={weekSummary} />
           ) : (
             <ModuleNotebookPanel module={selectedModule} signals={selectedSignals} />
           )}

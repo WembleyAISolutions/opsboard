@@ -1,13 +1,14 @@
-import type { TodaySummary } from "@/types/modules";
+import type { TodaySummary, WeekSummary } from "@/types/signal";
 import { ModulePill } from "@/ui/module-pill";
 
 type TodaySummaryCardProps = {
-  summary: TodaySummary;
+  todaySummary: TodaySummary;
+  weekSummary: WeekSummary;
 };
 
 type CountSectionProps = {
   title: string;
-  items: TodaySummary["today"];
+  items: Array<{ id: string; label: string; count: number }>;
 };
 
 function CountSection({ title, items }: CountSectionProps) {
@@ -26,7 +27,19 @@ function CountSection({ title, items }: CountSectionProps) {
   );
 }
 
-export function TodaySummaryCard({ summary }: TodaySummaryCardProps) {
+export function TodaySummaryCard({ todaySummary, weekSummary }: TodaySummaryCardProps) {
+  const todayItems = [
+    { id: "approvals-waiting", label: "approvals waiting", count: todaySummary.approvalsWaiting },
+    { id: "signals-needing-review", label: "signals needing review", count: todaySummary.signalsNeedingReview },
+    { id: "inbox-items", label: "inbox items", count: todaySummary.inboxItems }
+  ];
+
+  const weekItems = [
+    { id: "items-in-progress", label: "items in progress", count: weekSummary.itemsInProgress },
+    { id: "waiting-approval", label: "waiting approval", count: weekSummary.waitingApproval },
+    { id: "completed", label: "completed", count: weekSummary.completed }
+  ];
+
   return (
     <article className="rounded-xl border border-slate-700 bg-panel p-4 shadow-lg shadow-black/20">
       <div className="mb-4 flex items-center justify-between">
@@ -35,8 +48,8 @@ export function TodaySummaryCard({ summary }: TodaySummaryCardProps) {
       </div>
 
       <div className="space-y-5">
-        <CountSection title="Today" items={summary.today} />
-        <CountSection title="This Week" items={summary.thisWeek} />
+        <CountSection title="Today" items={todayItems} />
+        <CountSection title="This Week" items={weekItems} />
       </div>
     </article>
   );
