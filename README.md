@@ -1,274 +1,247 @@
 # OpsBoard
 
-**OpsBoard** is a lightweight human-AI work gateway for **central-AI multi-agent workflows**.
+OpsBoard is for people who already run an AI team — and feel the coordination load.
 
-It provides a quiet interface where an owner can forward instructions to a central AI and see only the minimal workflow signals that require attention.
+If you have ever had:
+- 6–10 AI conversations open
+- multiple AI roles running in parallel
+- work waiting in different places
+- your brain acting as the scheduler
 
-OpsBoard is designed for **solo founders, small teams, and AI-assisted businesses** that use multiple AI roles but do not want to become the manual message bus between them.
+then you already know the problem.
 
----
+OpsBoard is a lightweight signal layer between you and your AI workers.
 
-# The Problem
-
-In central-AI multi-agent workflows, the human owner often becomes the **manual router**:
-
-- copying instructions between AI chats  
-- remembering which AI is responsible for what  
-- checking which AI is blocked or waiting  
-- manually coordinating approvals  
-
-This creates **communication friction** and prevents AI teams from operating smoothly.
+AI agents emit signals.  
+OpsBoard organizes them into a calm control surface.  
+You only look at what needs a decision.
 
 ---
 
-# The Solution
+## How It Works
 
-OpsBoard introduces a **minimal human-AI interface layer** that:
+Every AI worker emits **signals** — lightweight events that represent:
 
-- receives owner instructions  
-- forwards them to the central AI  
-- surfaces workflow signals from AI workers  
-- highlights approvals or human intervention points  
+| Signal Kind | Meaning |
+|-------------|---------|
+| `approval`  | Needs your explicit go / no-go |
+| `blocked`   | Cannot continue without you |
+| `attention` | Needs your awareness |
+| `input`     | New item has arrived |
+| `progress`  | Work is moving forward |
+| `info`      | Low-urgency update |
 
-Without turning the workflow into a noisy task management system.
-
----
-
-# What OpsBoard Is
-
-OpsBoard is:
-
-- a **human → AI instruction gateway**
-- a **minimal AI workflow signal board**
-- a **lightweight approval reminder**
-- a **desktop/mobile work entry panel**
+OpsBoard classifies each signal, routes it to the right module,  
+and shows you only what matters right now.
 
 ---
 
-# What OpsBoard Is NOT
+## Interface
 
-OpsBoard is **not**:
+OpsBoard Desktop Lite runs as a quiet side panel alongside your work.
 
-- a project management system  
-- a task board  
-- a chat platform  
-- a digital employee system  
-- a central orchestration AI  
+**Modules**
 
-The **central AI remains responsible** for:
+| Module | What it shows |
+|--------|---------------|
+| Inbox | Incoming items and reminders |
+| Signal | AI status updates and attention requests |
+| Approvals | Items waiting for your decision |
+| Voice | Quick voice captures |
 
-- understanding instructions
-- routing work to AI workers
-- managing workflow logic
-- summarizing outcomes
+**Today Summary**
 
-OpsBoard only **receives, forwards, signals, and reminds**.
+```
+TODAY
+  2 approvals waiting
+  1 signal needs review
+  1 inbox item
 
----
+THIS WEEK
+  3 items in progress
+  1 waiting approval
+  2 completed
+```
 
-# Core Modules
+Counts only. No task list. No noise.
 
-### Inbox
-Owner input and reminders.
+**Actions**
 
-### Signal
-Minimal workflow states from AI agents.
+Every signal can be resolved with a small quiet action:
 
-pending
-approval
-doing
-done
-blocked
+```
+Approvals  →  approve / reject / later
+Signal     →  mark reviewed / dismiss
+Inbox      →  mark reviewed / dismiss
+Voice      →  dismiss / send to inbox
+```
 
-### Approvals
-Items requiring human confirmation.
-
-### Voice Capture
-Quick voice instructions forwarded to the central AI.
-
-### Today
-Top 3–5 priority signals summarized by the central AI.
+No forms. No modals. No confirmation dialogs.
 
 ---
 
-# Product Family
+## Signal Producer Protocol
 
-## OpsBoard Lite
-Desktop side panel for daily work.
+AI workers connect to OpsBoard through the **Signal Producer Protocol**.
 
-Features:
+Any AI system — Claude Code, LangGraph, AutoGen, CrewAI,  
+a local script, or a manual producer — can emit signals  
+using a simple JSON payload.
 
-- desktop edge strip
-- expandable mini work notebook
-- runs alongside a central AI workspace
+Current protocol version: **v0.9 / Pre-implementation Review**
 
----
+```json
+{
+  "protocol_version": "1.0",
+  "signal_id": "finance-001",
+  "source_ai": "FINANCE_AI",
+  "title": "Invoice awaiting approval",
+  "summary": "Supplier invoice requires payment approval.",
+  "signal_kind": "approval",
+  "signal_priority": "high",
+  "human_action_needed": true,
+  "timestamp": "2026-03-11T12:15:00.000Z"
+}
+```
 
-## OpsBoard Mobile
-Mobile intake and approval gateway.
+The protocol is designed so that:
 
-Features:
-
-- quick voice capture
-- approval notifications
-- minimal workflow signals
-
----
-
-## OpsBoard Pad
-Tablet side workspace.
-
-Features:
-
-- lightweight work notebook
-- signal overview
-- AI instruction entry
+- a local mock producer can implement it in minutes
+- a real orchestrator can connect without deep coupling
+- OpsBoard handles all normalization and routing
 
 ---
 
-# UX Principles
+## Architecture
 
-OpsBoard follows strict simplicity rules:
+```
+Your AI Team
+(Dev AI, Finance AI, Home AI, Business AI ...)
+        ↓
+Signal Producer Protocol
+        ↓
+OpsBoard Signal Engine
+(classify → normalize → route)
+        ↓
+OpsBoard UI
+(surface → action → resolve)
+        ↓
+You
+```
 
-- minimal interface
-- quiet visual design
-- default system fonts
-- no decorative backgrounds
-- only a few eye-friendly paper tone colors
+OpsBoard does not execute work.  
+OpsBoard does not orchestrate agents.  
+OpsBoard does not store decisions.
 
-Examples:
-
-off-white
-warm light gray
-mist blue
-soft sage
-
-These colors are **visual comfort only**, not workflow meaning.
-
----
-
-# Architecture Boundary
-
-Human
-↓
-OpsBoard
-↓
-Central AI
-↓
-Worker AIs
-
-
-### Central AI
-
-Responsible for:
-
-- instruction interpretation
-- work routing
-- workflow decisions
-- result summarization
-
-### Worker AIs
-
-Responsible for:
-
-- execution
-- specialized work
-- domain outputs
-
-### OpsBoard
-
-Responsible for:
-
-- receiving instructions
-- forwarding instructions
-- showing workflow signals
-- surfacing approvals
+It surfaces. You resolve. Work continues.
 
 ---
 
-# Data Schema (Minimal)
+## Who This Is For
 
-Example entry structure:
+**Primary user: AI-heavy solo operators**
 
-entry_id
-source_input
-forward_status
-signal_status
-human_action_needed
-ai_reply_summary
-timestamp
+One human. Multiple AI workers. Real output every day.
+
+You already know the coordination friction is real.  
+You already wish something would just show you what needs you.
+
+That is who OpsBoard is built for.
 
 ---
 
-# Development Principles
+## Product Family
+
+**OpsBoard Desktop Lite**  
+Side panel for daily work. Runs alongside ChatGPT or any AI workspace.
+
+**OpsBoard Mobile** *(roadmap)*  
+Quick approvals and voice capture on the go.
+
+**OpsBoard Pad** *(roadmap)*  
+Tablet workspace for signal review and instruction entry.
+
+---
+
+## Development Principles
 
 OpsBoard must remain:
 
 - small
 - focused
-- stable
-- easy to use
-- extensible for AI workflows
+- calm
+- easy to understand in one session
+- extensible for real AI workflows
 
-It should **never grow into a large enterprise system**.
+It will never become an enterprise dashboard.  
+Complexity is a failure state, not a feature.
 
 ---
 
-# Development Roadmap
+## Roadmap
 
-### v0.1
-Product specification and minimal interface schema.
-
-### v0.2
-Desktop Lite prototype.
-
-### v0.3
-Mobile and tablet interface.
-
-### v0.4
-Integration with central AI and agent orchestrators.
+| Version | Focus |
+|---------|-------|
+| v0.1 | Core UI prototype, signal model, mock data |
+| v0.2 | Local signal actions, today summary, signal engine |
+| v0.3 | Signal Producer Protocol v1.0, real producer integration |
+| v0.4 | Central AI connection, multi-agent workflows |
 
 ---
 
 ## Repository Structure
 
-    opsboard
-    │
-    ├─ docs
-    │  ├─ brief
-    │  ├─ architecture
-    │  ├─ product
-    │  ├─ ux
-    │  └─ dev
-    │
-    ├─ app
-    ├─ components
-    ├─ schema
-    └─ README.md
+```
+opsboard/
+├── docs/
+│   ├── signal-producer-protocol-v0.9.md
+│   ├── architecture/
+│   ├── product/
+│   └── ux/
+├── app/
+├── components/
+│   ├── desktop-lite-shell.tsx
+│   ├── module-notebook-panel.tsx
+│   └── today-summary-card.tsx
+├── lib/
+│   ├── signal-engine.ts
+│   ├── signal-producer-validator.ts
+│   ├── signal-producer-adapter.ts
+│   ├── signal-producer-transport.ts
+│   └── signal-selectors.ts
+├── types/
+│   └── signal-producer.ts
+├── examples/
+│   └── producers/
+│       ├── dev-ai-mock.ts
+│       ├── finance-mock.ts
+│       └── home-ai-mock.ts
+├── tests/
+│   └── signal-producer.test.ts
+└── README.md
+```
 
 ---
 
-# Development Language Rule
+## Development Language
 
-All development files must use **English**, including:
+All engineering files use English:  
+code, comments, component names, schema definitions, docs.
 
-- README
-- docs
-- code comments
-- component names
-- schema definitions
-- issue templates
-- PR templates
-
-User inputs may be **multilingual**, but the engineering baseline remains English.
+User inputs may be multilingual.  
+The engineering baseline is English.
 
 ---
 
-# Open Source Goal
+## Open Source
 
-OpsBoard aims to become a **small but powerful open-source interface layer for AI-driven companies**.
+OpsBoard is released under the MIT License.
 
-It helps founders and teams run AI workflows without being buried in coordination overhead.
+The goal is a small but real open-source interface layer  
+for people running AI-driven operations.
+
+Not another productivity app.  
+A calm control surface for AI work.
 
 ---
 
