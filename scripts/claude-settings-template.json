@@ -1,0 +1,50 @@
+{
+  "_comment": "Copy relevant hooks into ~/.claude/settings.json",
+  "_opsboard_hook": "node /ABSOLUTE/PATH/TO/opsboard/scripts/opsboard-claude-hook.js",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /ABSOLUTE/PATH/TO/opsboard/scripts/opsboard-claude-hook.js"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /ABSOLUTE/PATH/TO/opsboard/scripts/opsboard-claude-hook.js"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /ABSOLUTE/PATH/TO/opsboard/scripts/opsboard-claude-hook.js"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /ABSOLUTE/PATH/TO/opsboard/scripts/opsboard-claude-hook.js"
+          }
+        ]
+      }
+    ]
+  }
+}
