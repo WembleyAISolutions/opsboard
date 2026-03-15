@@ -1,10 +1,5 @@
-import type { TodaySummary, WeekSummary } from "@/types/signal";
 import { ModulePill } from "@/ui/module-pill";
-
-type TodaySummaryCardProps = {
-  todaySummary: TodaySummary;
-  weekSummary: WeekSummary;
-};
+import { useSummary } from "@/lib/use-signals";
 
 type CountSectionProps = {
   title: string;
@@ -27,18 +22,25 @@ function CountSection({ title, items }: CountSectionProps) {
   );
 }
 
-export function TodaySummaryCard({ todaySummary, weekSummary }: TodaySummaryCardProps) {
+export function TodaySummaryCard() {
+  const { summary, loading } = useSummary();
+
   const todayItems = [
-    { id: "approvals-waiting", label: "approvals waiting", count: todaySummary.approvalsWaiting },
-    { id: "signals-needing-review", label: "signals needing review", count: todaySummary.signalsNeedingReview },
-    { id: "inbox-items", label: "inbox items", count: todaySummary.inboxItems }
+    { id: "approvals-waiting", label: "approvals waiting", count: summary?.today.approvals_waiting ?? 0 },
+    { id: "signals-needing-review", label: "signals needing review", count: summary?.today.signals_needing_review ?? 0 },
+    { id: "inbox-items", label: "inbox items", count: summary?.today.inbox_items ?? 0 }
   ];
 
   const weekItems = [
-    { id: "items-in-progress", label: "items in progress", count: weekSummary.itemsInProgress },
-    { id: "waiting-approval", label: "waiting approval", count: weekSummary.waitingApproval },
-    { id: "completed", label: "completed", count: weekSummary.completed }
+    { id: "items-in-progress", label: "items in progress", count: summary?.this_week.in_progress ?? 0 },
+    { id: "waiting-approval", label: "waiting approval", count: summary?.this_week.waiting_approval ?? 0 },
+    { id: "completed", label: "completed", count: summary?.this_week.completed ?? 0 }
   ];
+
+  const sourceText = Object.entries(summary?.source_breakdown ?? {})
+    .filter(([, count]) => count > 0)
+    .map(([source, count]) => `${source} · ${count}`)
+    .join("  ");
 
   return (
     <article className="rounded-xl border border-slate-700 bg-panel p-4 shadow-lg shadow-black/20">
@@ -47,9 +49,10 @@ export function TodaySummaryCard({ todaySummary, weekSummary }: TodaySummaryCard
         <ModulePill tone="normal" state="active" />
       </div>
 
-      <div className="space-y-5">
+      <div className={`space-y-5 ${loading ? "opacity-70" : ""}`}>
         <CountSection title="Today" items={todayItems} />
         <CountSection title="This Week" items={weekItems} />
+        {sourceText ? <p className="text-xs text-textMuted">{sourceText}</p> : null}
       </div>
     </article>
   );

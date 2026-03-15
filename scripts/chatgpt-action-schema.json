@@ -1,0 +1,136 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpsBoard Signal API",
+    "description": "Emit signals to OpsBoard from ChatGPT",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://REPLACE_WITH_YOUR_OPSBOARD_URL",
+      "description": "OpsBoard instance (replace with ngrok URL or deployed URL)"
+    }
+  ],
+  "paths": {
+    "/api/signals": {
+      "post": {
+        "operationId": "emitSignal",
+        "summary": "Emit a signal to OpsBoard",
+        "description": "Send a signal when you identify something that needs the operator's attention, approval, or awareness.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "protocol_version",
+                  "signal_id",
+                  "source_ai",
+                  "title",
+                  "summary",
+                  "signal_kind",
+                  "signal_priority",
+                  "human_action_needed",
+                  "timestamp"
+                ],
+                "properties": {
+                  "protocol_version": {
+                    "type": "string",
+                    "enum": [
+                      "1.0"
+                    ],
+                    "description": "Always use 1.0"
+                  },
+                  "signal_id": {
+                    "type": "string",
+                    "description": "Unique ID. Use format: home-[timestamp]-[random4chars]"
+                  },
+                  "source_ai": {
+                    "type": "string",
+                    "enum": [
+                      "HOME_AI",
+                      "DEV_AI",
+                      "FINANCE_AI",
+                      "BUSINESS_AI",
+                      "TAX_AI",
+                      "SYSTEM"
+                    ],
+                    "description": "Use HOME_AI for home and family matters"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Short human-readable title, under 80 characters"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One sentence explaining what needs attention"
+                  },
+                  "signal_kind": {
+                    "type": "string",
+                    "enum": [
+                      "input",
+                      "info",
+                      "attention",
+                      "approval",
+                      "progress",
+                      "blocked"
+                    ],
+                    "description": "attention: needs review. approval: needs yes/no. blocked: cannot proceed. input: new item. progress: update only. info: low priority."
+                  },
+                  "signal_priority": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "normal",
+                      "high"
+                    ]
+                  },
+                  "human_action_needed": {
+                    "type": "boolean",
+                    "description": "true for approvals and blocked items"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Current time in ISO 8601 format"
+                  },
+                  "correlation_id": {
+                    "type": "string",
+                    "description": "Optional. Group related signals together."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signal accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "signal_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error"
+          },
+          "409": {
+            "description": "Duplicate signal_id"
+          }
+        }
+      }
+    }
+  }
+}

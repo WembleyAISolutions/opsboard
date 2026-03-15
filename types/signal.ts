@@ -1,4 +1,16 @@
-export type AiSourceName = "DEV_AI" | "FINANCE_AI" | "HOME_AI" | "BUSINESS_AI" | "TAX_AI" | "SYSTEM";
+export type AiSourceName =
+  | "DEV_AI"
+  | "FINANCE_AI"
+  | "HOME_AI"
+  | "BUSINESS_AI"
+  | "TAX_AI"
+  | "SYSTEM"
+  | "CLAUDE"
+  | "CLAUDE_CODE"
+  | "OPENAI"
+  | "GEMINI"
+  | "APPLE_DEV"
+  | "CUSTOM";
 
 export type SignalStatus = "pending" | "approval" | "doing" | "done" | "blocked";
 

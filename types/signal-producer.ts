@@ -2,7 +2,19 @@ export type SignalKind = "input" | "info" | "attention" | "approval" | "progress
 
 export type SignalPriority = "low" | "normal" | "high";
 
-export type SourceAI = "DEV_AI" | "FINANCE_AI" | "HOME_AI" | "BUSINESS_AI" | "TAX_AI" | "SYSTEM";
+export type SourceAI =
+  | "DEV_AI"
+  | "FINANCE_AI"
+  | "HOME_AI"
+  | "BUSINESS_AI"
+  | "TAX_AI"
+  | "SYSTEM"
+  | "CLAUDE"
+  | "CLAUDE_CODE"
+  | "OPENAI"
+  | "GEMINI"
+  | "APPLE_DEV"
+  | "CUSTOM";
 
 export type TargetModule = "inbox" | "signal" | "approvals" | "voice" | "today_summary_only";
 

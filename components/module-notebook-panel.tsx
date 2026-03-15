@@ -1,11 +1,10 @@
 import type { CoreModule } from "@/types/modules";
 import type { LocalSignalAction, SignalItem } from "@/types/signal";
+import { useSignalAction, useSignals } from "@/lib/use-signals";
 import { ModulePill } from "@/ui/module-pill";
 
 type ModuleNotebookPanelProps = {
   module: CoreModule;
-  signals: SignalItem[];
-  onAction: (signalId: string, action: LocalSignalAction) => void;
 };
 
 function formatSourceName(source: SignalItem["source_ai"]): string {
@@ -41,7 +40,15 @@ function actionLabels(moduleId: CoreModule["id"]): Array<{ label: string; action
   return [{ label: "later", action: "later" }];
 }
 
-export function ModuleNotebookPanel({ module, signals, onAction }: ModuleNotebookPanelProps) {
+export function ModuleNotebookPanel({ module }: ModuleNotebookPanelProps) {
+  const moduleKey = module.id === "today" ? undefined : module.id;
+  const { signals, loading, error } = useSignals(moduleKey);
+  const { performAction, loading: actionLoading, error: actionError } = useSignalAction();
+
+  async function onAction(signalId: string, action: LocalSignalAction) {
+    await performAction(signalId, action);
+  }
+
   return (
     <article className="min-h-[440px] rounded-2xl border border-slate-800 bg-panel p-6">
       <header className="mb-5 flex items-center justify-between">
@@ -52,6 +59,10 @@ export function ModuleNotebookPanel({ module, signals, onAction }: ModuleNoteboo
       <p className="mb-5 text-sm text-textMuted">{module.summary}</p>
 
       <div className="space-y-3">
+        {loading ? <p className="text-sm text-textMuted">Loading signals...</p> : null}
+        {error ? <p className="text-sm text-textMuted">Signal refresh error. Showing last known state.</p> : null}
+        {actionError ? <p className="text-sm text-textMuted">Action error: {actionError}</p> : null}
+        {!loading && signals.length === 0 ? <p className="text-sm text-textMuted">No active signals in this module.</p> : null}
         {signals.map((signal) => (
           <div key={signal.signal_id} className="rounded-lg border border-slate-800 px-3 py-2">
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-accent">{formatSourceName(signal.source_ai)}</p>
@@ -62,6 +73,7 @@ export function ModuleNotebookPanel({ module, signals, onAction }: ModuleNoteboo
                 <button
                   key={`${signal.signal_id}-${action}`}
                   type="button"
+                  disabled={actionLoading}
                   onClick={() => onAction(signal.signal_id, action)}
                   className="rounded border border-slate-700 px-2 py-1 text-[11px] uppercase tracking-wide text-slate-300"
                 >

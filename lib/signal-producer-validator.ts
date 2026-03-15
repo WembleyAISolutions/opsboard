@@ -11,7 +11,20 @@ import type {
 
 const SIGNAL_KINDS: SignalKind[] = ["input", "info", "attention", "approval", "progress", "blocked"];
 const SIGNAL_PRIORITIES: SignalPriority[] = ["low", "normal", "high"];
-const SOURCE_AIS: SourceAI[] = ["DEV_AI", "FINANCE_AI", "HOME_AI", "BUSINESS_AI", "TAX_AI", "SYSTEM"];
+const SOURCE_AIS: SourceAI[] = [
+  "DEV_AI",
+  "FINANCE_AI",
+  "HOME_AI",
+  "BUSINESS_AI",
+  "TAX_AI",
+  "SYSTEM",
+  "CLAUDE",
+  "CLAUDE_CODE",
+  "OPENAI",
+  "GEMINI",
+  "APPLE_DEV",
+  "CUSTOM"
+];
 const SIGNAL_STATUSES: SignalStatus[] = ["pending", "doing", "done", "blocked", "approval"];
 const TARGET_MODULES: TargetModule[] = ["inbox", "signal", "approvals", "voice", "today_summary_only"];
 const RESTRICTED_METADATA_PREFIXES = ["_internal", "_chain", "_reasoning", "_trace"];
