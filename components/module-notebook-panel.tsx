@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { CoreModule } from "@/types/modules";
 import type { LocalSignalAction, SignalItem } from "@/types/signal";
+import type { ApprovalRecord, ApprovalStatus } from "@/lib/approval-engine";
+import { useApprovals } from "@/lib/use-approvals";
 import { useSignalAction, useSignals } from "@/lib/use-signals";
 import { useWorkflows } from "@/lib/use-workflows";
 import type { WorkflowStatus } from "@/lib/workflow-engine";
@@ -56,17 +58,87 @@ function workflowBadgeClass(status: WorkflowStatus): string {
   return "border-emerald-500/30 text-emerald-300/80";
 }
 
+function approvalBadgeClass(status: ApprovalStatus): string {
+  if (status === "pending") {
+    return "border-amber-500/40 text-amber-300";
+  }
+  if (status === "approved") {
+    return "border-emerald-500/40 text-emerald-300";
+  }
+  if (status === "rejected") {
+    return "border-red-500/40 text-red-300";
+  }
+  return "border-slate-500/40 text-slate-300";
+}
+
+function relativeTime(iso: string): string {
+  const deltaMs = Date.now() - Date.parse(iso);
+  const mins = Math.max(1, Math.floor(deltaMs / 60000));
+  if (mins < 60) {
+    return `${mins} minute${mins === 1 ? "" : "s"} ago`;
+  }
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) {
+    return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  }
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function shortId(id: string): string {
+  if (id.length <= 20) {
+    return id;
+  }
+  return `${id.slice(0, 10)}...${id.slice(-6)}`;
+}
+
 export function ModuleNotebookPanel({ module }: ModuleNotebookPanelProps) {
   const moduleKey = module.id === "today" ? undefined : module.id;
   const { signals, loading, error } = useSignals(moduleKey);
   const { performAction, loading: actionLoading, error: actionError } = useSignalAction();
+  const { approvals } = useApprovals();
   const { workflows } = useWorkflows();
   const [expandedWorkflows, setExpandedWorkflows] = useState<Record<string, boolean>>({});
+  const [approvalOverrides, setApprovalOverrides] = useState<Record<string, Partial<ApprovalRecord>>>({});
+  const [approvalError, setApprovalError] = useState<string | null>(null);
   const moduleWorkflows =
     module.id === "signal" ? workflows.filter((workflow) => workflow.status === "blocked" || workflow.status === "pending") : [];
+  const mergedApprovals =
+    module.id === "approvals"
+      ? approvals.map((approval) => ({
+          ...approval,
+          ...(approvalOverrides[approval.approval_id] ?? {})
+        }))
+      : [];
+  const pendingApprovals = mergedApprovals.filter((approval) => approval.status === "pending");
+  const decidedApprovals = mergedApprovals.filter((approval) => approval.status !== "pending");
 
   async function onAction(signalId: string, action: LocalSignalAction) {
     await performAction(signalId, action);
+  }
+
+  async function onApprovalDecision(approvalId: string, status: "approved" | "rejected" | "deferred") {
+    const optimistic: Partial<ApprovalRecord> = {
+      status,
+      decided_at: new Date().toISOString(),
+      decided_by: "operator"
+    };
+    setApprovalOverrides((prev) => ({ ...prev, [approvalId]: { ...(prev[approvalId] ?? {}), ...optimistic } }));
+    setApprovalError(null);
+
+    const response = await fetch(`/api/approvals/${encodeURIComponent(approvalId)}/decide`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status })
+    });
+    if (!response.ok) {
+      setApprovalError(`Approval action failed (${response.status})`);
+      setApprovalOverrides((prev) => {
+        const next = { ...prev };
+        delete next[approvalId];
+        return next;
+      });
+    }
   }
 
   return (
@@ -79,6 +151,71 @@ export function ModuleNotebookPanel({ module }: ModuleNotebookPanelProps) {
       <p className="mb-5 text-sm text-textMuted">{module.summary}</p>
 
       <div className="space-y-3">
+        {module.id === "approvals" ? (
+          <section className="mb-4 rounded-lg border border-slate-800 p-3">
+            <p className="mb-2 text-xs uppercase tracking-[0.14em] text-textMuted">Pending Approvals</p>
+            {approvalError ? <p className="mb-2 text-xs text-textMuted">{approvalError}</p> : null}
+            {pendingApprovals.length === 0 ? <p className="text-sm text-textMuted">No pending approvals.</p> : null}
+            <div className="space-y-2">
+              {pendingApprovals.map((approval) => (
+                <div key={approval.approval_id} className="rounded border border-slate-800 px-2 py-2">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className={`rounded border px-1.5 py-0.5 text-[10px] uppercase ${approvalBadgeClass(approval.status)}`}>
+                      {approval.status}
+                    </span>
+                    <span className="text-xs text-textMuted">{shortId(approval.approval_id)}</span>
+                    <span className="rounded border border-slate-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-accent">
+                      {approval.source_ai.replaceAll("_", " ")}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-textPrimary">{approval.title}</p>
+                  <p className="mt-1 text-sm text-textMuted">{approval.summary}</p>
+                  <div className="mt-2 flex items-center gap-2 text-xs text-textMuted">
+                    <span>{relativeTime(approval.requested_at)}</span>
+                    {approval.workflow_id ? <span className="rounded border border-slate-700 px-1 py-0.5">{approval.workflow_id}</span> : null}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onApprovalDecision(approval.approval_id, "approved")}
+                      className="rounded border border-emerald-600/60 px-2 py-1 text-[11px] uppercase tracking-wide text-emerald-300"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onApprovalDecision(approval.approval_id, "rejected")}
+                      className="rounded border border-red-600/60 px-2 py-1 text-[11px] uppercase tracking-wide text-red-300"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onApprovalDecision(approval.approval_id, "deferred")}
+                      className="rounded border border-slate-600/70 px-2 py-1 text-[11px] uppercase tracking-wide text-slate-300"
+                    >
+                      Defer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {decidedApprovals.length > 0 ? (
+              <div className="mt-3 border-t border-slate-800 pt-2">
+                <p className="mb-2 text-xs uppercase tracking-[0.14em] text-textMuted">Recently Decided</p>
+                <div className="space-y-1">
+                  {decidedApprovals.slice(0, 6).map((approval) => (
+                    <div key={approval.approval_id} className="flex items-center gap-2 text-xs text-textMuted">
+                      <span className={`rounded border px-1.5 py-0.5 uppercase ${approvalBadgeClass(approval.status)}`}>{approval.status}</span>
+                      <span>{shortId(approval.approval_id)}</span>
+                      <span>{approval.decided_at ? relativeTime(approval.decided_at) : "-"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
         {module.id === "signal" && moduleWorkflows.length > 0 ? (
           <section className="mb-4 rounded-lg border border-slate-800 p-3">
             <p className="mb-2 text-xs uppercase tracking-[0.14em] text-textMuted">Workflows</p>
