@@ -1,5 +1,6 @@
 import { createSignalEngine } from "@/lib/signal-engine";
 import { normalize } from "@/lib/signal-producer-adapter";
+import { getWorkflowEngine } from "@/lib/workflow-engine";
 import type { LocalSignalEngine } from "@/lib/signal-engine";
 import type { SignalProducerPayload } from "@/types/signal-producer";
 
@@ -66,6 +67,18 @@ export function getSignalEngine(): LocalSignalEngine {
 
   if (!globalState[STORE_KEY]) {
     const engine = createSignalEngine();
+    const workflow = getWorkflowEngine();
+    const ingest = engine.ingest.bind(engine);
+    engine.ingest = ((signal) => {
+      ingest(signal);
+      workflow.registerSignal(signal as SignalProducerPayload);
+    }) as LocalSignalEngine["ingest"];
+    const apply = engine.applyLocalAction.bind(engine);
+    engine.applyLocalAction = ((signalId, action) => {
+      apply(signalId, action);
+      const updated = engine.getSignals().find((signal) => signal.signal_id === signalId);
+      if (updated) workflow.updateSignal(signalId, updated.signal_status);
+    }) as LocalSignalEngine["applyLocalAction"];
     engine.ingestMany(seedSignals.map((payload) => normalize(payload)));
     globalState[STORE_KEY] = engine;
     globalState[START_KEY] = Date.now();
@@ -116,3 +129,5 @@ export function resetSignalEngineStoreForTests(): void {
   delete globalState[STORE_KEY];
   delete globalState[START_KEY];
 }
+
+export { getWorkflowEngine } from "@/lib/workflow-engine";

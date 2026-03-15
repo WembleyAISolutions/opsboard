@@ -1,6 +1,9 @@
+import { useState } from "react";
 import type { CoreModule } from "@/types/modules";
 import type { LocalSignalAction, SignalItem } from "@/types/signal";
 import { useSignalAction, useSignals } from "@/lib/use-signals";
+import { useWorkflows } from "@/lib/use-workflows";
+import type { WorkflowStatus } from "@/lib/workflow-engine";
 import { ModulePill } from "@/ui/module-pill";
 
 type ModuleNotebookPanelProps = {
@@ -40,10 +43,27 @@ function actionLabels(moduleId: CoreModule["id"]): Array<{ label: string; action
   return [{ label: "later", action: "later" }];
 }
 
+function workflowBadgeClass(status: WorkflowStatus): string {
+  if (status === "blocked") {
+    return "border-red-500/40 text-red-300";
+  }
+  if (status === "pending") {
+    return "border-amber-500/40 text-amber-300";
+  }
+  if (status === "active") {
+    return "border-blue-500/40 text-blue-300";
+  }
+  return "border-emerald-500/30 text-emerald-300/80";
+}
+
 export function ModuleNotebookPanel({ module }: ModuleNotebookPanelProps) {
   const moduleKey = module.id === "today" ? undefined : module.id;
   const { signals, loading, error } = useSignals(moduleKey);
   const { performAction, loading: actionLoading, error: actionError } = useSignalAction();
+  const { workflows } = useWorkflows();
+  const [expandedWorkflows, setExpandedWorkflows] = useState<Record<string, boolean>>({});
+  const moduleWorkflows =
+    module.id === "signal" ? workflows.filter((workflow) => workflow.status === "blocked" || workflow.status === "pending") : [];
 
   async function onAction(signalId: string, action: LocalSignalAction) {
     await performAction(signalId, action);
@@ -59,6 +79,45 @@ export function ModuleNotebookPanel({ module }: ModuleNotebookPanelProps) {
       <p className="mb-5 text-sm text-textMuted">{module.summary}</p>
 
       <div className="space-y-3">
+        {module.id === "signal" && moduleWorkflows.length > 0 ? (
+          <section className="mb-4 rounded-lg border border-slate-800 p-3">
+            <p className="mb-2 text-xs uppercase tracking-[0.14em] text-textMuted">Workflows</p>
+            <div className="space-y-2">
+              {moduleWorkflows.map((workflow) => {
+                const isExpanded = expandedWorkflows[workflow.workflow_id] ?? false;
+                return (
+                  <div key={workflow.workflow_id} className="rounded border border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedWorkflows((prev) => ({
+                          ...prev,
+                          [workflow.workflow_id]: !isExpanded
+                        }))
+                      }
+                      className="flex w-full items-center gap-2 px-2 py-2 text-left text-xs text-textPrimary"
+                    >
+                      <span className={`rounded border px-1.5 py-0.5 uppercase tracking-wide ${workflowBadgeClass(workflow.status)}`}>
+                        {workflow.status}
+                      </span>
+                      <span className="font-medium">{workflow.workflow_id}</span>
+                      <span className="text-textMuted">- {workflow.signal_count} signals - {workflow.source_ais.join(" · ")}</span>
+                    </button>
+                    {isExpanded ? (
+                      <div className="space-y-1 border-t border-slate-800 px-2 py-2">
+                        {workflow.signals.map((signal) => (
+                          <p key={signal.signal_id} className="text-xs text-textMuted">
+                            {signal.title}
+                          </p>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
         {loading ? <p className="text-sm text-textMuted">Loading signals...</p> : null}
         {error ? <p className="text-sm text-textMuted">Signal refresh error. Showing last known state.</p> : null}
         {actionError ? <p className="text-sm text-textMuted">Action error: {actionError}</p> : null}
