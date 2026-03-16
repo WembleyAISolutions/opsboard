@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CoreModule } from "@/types/modules";
 import type { LocalSignalAction, SignalItem } from "@/types/signal";
 import type { ApprovalRecord, ApprovalStatus } from "@/lib/approval-engine";
@@ -10,6 +10,11 @@ import { ModulePill } from "@/ui/module-pill";
 
 type ModuleNotebookPanelProps = {
   module: CoreModule;
+};
+
+type RoutingDecision = {
+  signal_id: string;
+  routing_hint: string | null;
 };
 
 function formatSourceName(source: SignalItem["source_ai"]): string {
@@ -101,6 +106,7 @@ export function ModuleNotebookPanel({ module }: ModuleNotebookPanelProps) {
   const [expandedWorkflows, setExpandedWorkflows] = useState<Record<string, boolean>>({});
   const [approvalOverrides, setApprovalOverrides] = useState<Record<string, Partial<ApprovalRecord>>>({});
   const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [routingHints, setRoutingHints] = useState<Record<string, string>>({});
   const moduleWorkflows =
     module.id === "signal" ? workflows.filter((workflow) => workflow.status === "blocked" || workflow.status === "pending") : [];
   const mergedApprovals =
@@ -116,6 +122,42 @@ export function ModuleNotebookPanel({ module }: ModuleNotebookPanelProps) {
   async function onAction(signalId: string, action: LocalSignalAction) {
     await performAction(signalId, action);
   }
+
+  useEffect(() => {
+    if (module.id !== "signal" || signals.length === 0) {
+      return;
+    }
+    let cancelled = false;
+    const loadRoutingHints = async () => {
+      try {
+        const response = await fetch("/api/routing");
+        const data = (await response.json()) as { ok: boolean; recent_decisions?: RoutingDecision[] };
+        if (!response.ok || !data.ok) {
+          return;
+        }
+        const current = new Set(signals.map((signal) => signal.signal_id));
+        const mapped = (data.recent_decisions ?? []).reduce<Record<string, string>>((acc, decision) => {
+          if (decision.routing_hint && current.has(decision.signal_id)) {
+            acc[decision.signal_id] = decision.routing_hint;
+          }
+          return acc;
+        }, {});
+        if (!cancelled) {
+          setRoutingHints(mapped);
+        }
+      } catch {
+        // non-blocking UI enhancement
+      }
+    };
+    void loadRoutingHints();
+    const timer = window.setInterval(() => {
+      void loadRoutingHints();
+    }, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [module.id, signals]);
 
   async function onApprovalDecision(approvalId: string, status: "approved" | "rejected" | "deferred") {
     const optimistic: Partial<ApprovalRecord> = {
@@ -264,6 +306,9 @@ export function ModuleNotebookPanel({ module }: ModuleNotebookPanelProps) {
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-accent">{formatSourceName(signal.source_ai)}</p>
             <p className="text-sm font-medium text-textPrimary">{signal.title}</p>
             <p className="mt-1 text-sm text-textMuted">{signal.summary}</p>
+            {module.id === "signal" && routingHints[signal.signal_id] ? (
+              <p className="mt-1 text-xs text-textMuted">routed: {routingHints[signal.signal_id]}</p>
+            ) : null}
             <div className="mt-2 flex flex-wrap gap-2">
               {actionLabels(module.id).map(({ label, action }) => (
                 <button

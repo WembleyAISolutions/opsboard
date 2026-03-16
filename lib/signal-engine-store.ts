@@ -1,6 +1,7 @@
 import { createSignalEngine } from "@/lib/signal-engine";
 import { normalize } from "@/lib/signal-producer-adapter";
 import { getApprovalEngine } from "@/lib/approval-engine";
+import { getRoutingEngine } from "@/lib/routing-engine";
 import { getWorkflowEngine } from "@/lib/workflow-engine";
 import type { LocalSignalEngine } from "@/lib/signal-engine";
 import type { SignalProducerPayload } from "@/types/signal-producer";
@@ -69,10 +70,17 @@ export function getSignalEngine(): LocalSignalEngine {
   if (!globalState[STORE_KEY]) {
     const engine = createSignalEngine();
     const approvals = getApprovalEngine();
+    const routing = getRoutingEngine();
     const workflow = getWorkflowEngine();
     const ingest = engine.ingest.bind(engine);
     engine.ingest = ((signal) => {
-      ingest(signal);
+      const routedSignal = { ...signal };
+      try {
+        routedSignal.target_module = routing.route(routedSignal as SignalProducerPayload, routedSignal.target_module);
+      } catch {
+        // routing failures must never block ingestion
+      }
+      ingest(routedSignal);
       workflow.registerSignal(signal as SignalProducerPayload);
       approvals.registerApproval(signal as SignalProducerPayload);
     }) as LocalSignalEngine["ingest"];
@@ -141,3 +149,4 @@ export function resetSignalEngineStoreForTests(): void {
 
 export { getWorkflowEngine } from "@/lib/workflow-engine";
 export { getApprovalEngine } from "@/lib/approval-engine";
+export { getRoutingEngine } from "@/lib/routing-engine";
