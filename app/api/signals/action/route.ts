@@ -61,7 +61,7 @@ function updateSignalForAction(signal: SignalItem, action: LocalSignalAction): S
   };
 }
 
-export function handleSignalActionPost(body: ActionBody): { status: number; body: Record<string, unknown> } {
+function handleSignalActionPost(body: ActionBody): { status: number; body: Record<string, unknown> } {
   if (!body.signal_id || !allowedActions.includes(body.action)) {
     return { status: 422, body: { ok: false, error: "Invalid action payload" } };
   }

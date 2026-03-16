@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSignalCountsByModule, getSignalEngine, getSignalSourceBreakdown } from "@/lib/signal-engine-store";
 
-export function handleSignalsSummaryGet(): { status: number; body: Record<string, unknown> } {
+function handleSignalsSummaryGet(): { status: number; body: Record<string, unknown> } {
   const engine = getSignalEngine();
   const today = engine.getTodaySummary();
   const week = engine.getWeekSummary();

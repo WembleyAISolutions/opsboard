@@ -27,7 +27,7 @@ function sortSignals<T extends { signal_priority: string; created_at: string }>(
   });
 }
 
-export function handleSignalsListGet(module?: string): { status: number; body: Record<string, unknown> } {
+function handleSignalsListGet(module?: string): { status: number; body: Record<string, unknown> } {
   const engine = getSignalEngine();
   const activeSignals = engine.getSignals().filter((signal) => !signal.is_dismissed);
 

@@ -26,7 +26,7 @@ function badPayloadSummary(raw: unknown): { source_ai: string; signal_id: string
   };
 }
 
-export async function handleSignalsPost(raw: unknown): Promise<{ status: number; body: Record<string, unknown> }> {
+async function handleSignalsPost(raw: unknown): Promise<{ status: number; body: Record<string, unknown> }> {
   try {
     const result = await handleWebhookPayload(raw, getSignalEngine());
     if (result.ok) {
@@ -47,7 +47,7 @@ export async function handleSignalsPost(raw: unknown): Promise<{ status: number;
   }
 }
 
-export function handleSignalsStatusGet(): { status: number; body: Record<string, unknown> } {
+function handleSignalsStatusGet(): { status: number; body: Record<string, unknown> } {
   const engine = getSignalEngine();
   return {
     status: 200,
