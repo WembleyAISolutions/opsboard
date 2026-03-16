@@ -1,14 +1,22 @@
 {
+  "_setup_instructions": [
+    "1. Deploy OpsBoard to Vercel: bash scripts/deploy-vercel.sh",
+    "2. Copy your Vercel URL (e.g. https://opsboard-xxx.vercel.app)",
+    "3. Replace YOUR_VERCEL_URL below with your actual Vercel URL",
+    "4. In ChatGPT: open your Home AI Custom GPT → Configure → Actions → Create action",
+    "5. Paste this entire file (without _setup_instructions) as the schema",
+    "6. Save and test"
+  ],
   "openapi": "3.1.0",
   "info": {
     "title": "OpsBoard Signal API",
-    "description": "Emit signals to OpsBoard from ChatGPT",
+    "description": "Emit signals to OpsBoard from ChatGPT. Use this when you identify items that need the operator's attention, approval, or awareness.",
     "version": "1.0.0"
   },
   "servers": [
     {
-      "url": "https://REPLACE_WITH_YOUR_OPSBOARD_URL",
-      "description": "OpsBoard instance (replace with ngrok URL or deployed URL)"
+      "url": "https://YOUR_VERCEL_URL.vercel.app",
+      "description": "Replace YOUR_VERCEL_URL with your actual Vercel deployment URL"
     }
   ],
   "paths": {
@@ -16,7 +24,7 @@
       "post": {
         "operationId": "emitSignal",
         "summary": "Emit a signal to OpsBoard",
-        "description": "Send a signal when you identify something that needs the operator's attention, approval, or awareness.",
+        "description": "Send a signal when you identify something requiring the operator's attention, approval, or awareness. Use this for family scheduling, home maintenance, financial items, and anything that needs a decision or first look.",
         "requestBody": {
           "required": true,
           "content": {
@@ -37,67 +45,59 @@
                 "properties": {
                   "protocol_version": {
                     "type": "string",
-                    "enum": [
-                      "1.0"
-                    ],
+                    "enum": ["1.0"],
                     "description": "Always use 1.0"
                   },
                   "signal_id": {
                     "type": "string",
-                    "description": "Unique ID. Use format: home-[timestamp]-[random4chars]"
+                    "description": "Unique ID. Format: home-[unix-timestamp]-[random4chars]"
                   },
                   "source_ai": {
                     "type": "string",
-                    "enum": [
-                      "HOME_AI",
-                      "DEV_AI",
-                      "FINANCE_AI",
-                      "BUSINESS_AI",
-                      "TAX_AI",
-                      "SYSTEM"
-                    ],
-                    "description": "Use HOME_AI for home and family matters"
+                    "enum": ["HOME_AI", "FINANCE_AI", "BUSINESS_AI", "TAX_AI", "DEV_AI", "SYSTEM"],
+                    "description": "Use HOME_AI for home and family matters. Use FINANCE_AI for financial items."
                   },
                   "title": {
                     "type": "string",
-                    "description": "Short human-readable title, under 80 characters"
+                    "description": "Short actionable title, under 80 characters"
                   },
                   "summary": {
                     "type": "string",
-                    "description": "One sentence explaining what needs attention"
+                    "description": "One sentence explaining what needs attention and what action is needed"
                   },
                   "signal_kind": {
                     "type": "string",
-                    "enum": [
-                      "input",
-                      "info",
-                      "attention",
-                      "approval",
-                      "progress",
-                      "blocked"
-                    ],
-                    "description": "attention: needs review. approval: needs yes/no. blocked: cannot proceed. input: new item. progress: update only. info: low priority."
+                    "enum": ["input", "info", "attention", "approval", "progress", "blocked"],
+                    "description": "attention: needs review. approval: needs yes/no. blocked: cannot proceed. input: new item. progress: update. info: low priority."
                   },
                   "signal_priority": {
                     "type": "string",
-                    "enum": [
-                      "low",
-                      "normal",
-                      "high"
-                    ]
+                    "enum": ["low", "normal", "high"]
                   },
                   "human_action_needed": {
                     "type": "boolean",
-                    "description": "true for approvals and blocked items"
+                    "description": "true for approvals and blocked items. false for info and progress."
                   },
                   "timestamp": {
                     "type": "string",
                     "format": "date-time",
                     "description": "Current time in ISO 8601 format"
                   },
-                  "correlation_id": {
+                  "workflow_id": {
                     "type": "string",
-                    "description": "Optional. Group related signals together."
+                    "description": "Optional. Group related signals. Example: wf_school_term1_2026"
+                  },
+                  "approval_id": {
+                    "type": "string",
+                    "description": "Optional. For approval signals requiring explicit decision tracking."
+                  },
+                  "routing_hint": {
+                    "type": "string",
+                    "description": "Optional. finance_review | dev_review | urgent | inbox | signal"
+                  },
+                  "source_ref": {
+                    "type": "string",
+                    "description": "Optional. URL linking back to the source (email, calendar event, etc.)"
                   }
                 }
               }
@@ -112,23 +112,15 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "ok": {
-                      "type": "boolean"
-                    },
-                    "signal_id": {
-                      "type": "string"
-                    }
+                    "ok": { "type": "boolean" },
+                    "signal_id": { "type": "string" }
                   }
                 }
               }
             }
           },
-          "422": {
-            "description": "Validation error"
-          },
-          "409": {
-            "description": "Duplicate signal_id"
-          }
+          "422": { "description": "Validation error" },
+          "409": { "description": "Duplicate signal_id" }
         }
       }
     }

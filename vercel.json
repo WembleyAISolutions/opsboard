@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["syd1"],
+  "env": {
+    "NEXT_PUBLIC_APP_VERSION": "0.8",
+    "OPSBOARD_ENV": "production"
+  }
+}
